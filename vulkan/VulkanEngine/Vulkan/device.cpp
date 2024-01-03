@@ -191,6 +191,31 @@ vkInit::QueueFamilyIndices vkInit::findQueueFamilies(vk::PhysicalDevice device, 
 	{
 		std::cout << "System can support " << queueFamilies.size() << " queue families" << std::endl;
 	}
+
+	int i = 0;
+	for (vk::QueueFamilyProperties queueFamily : queueFamilies)
+	{
+		if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
+		{
+			indices.graphicsFamily = i;
+			indices.presentFamily = i;
+			
+		}
+
+		if (indices.isComplete())
+		{
+			break;
+		}
+		i++;
+	}
+
 	return indices;
 
+}
+
+vk::Device vkInit::create_logical_device(vk::PhysicalDevice physicalDevice, bool debug)
+{
+	QueueFamilyIndices indices = findQueueFamilies(physicalDevice, debug);
+	float queuePriority = 1.0f;
+	vk::DeviceQueueCreateInfo queueCreateInfo = vk::DeviceQueueCreateInfo()
 }

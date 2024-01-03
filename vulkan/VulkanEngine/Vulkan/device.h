@@ -22,5 +22,5 @@ namespace vkInit
 
 	QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, bool debug);
 
-
+	vk::Device create_logical_device(vk::PhysicalDevice physicalDevice, bool debug);
 }
