@@ -1,6 +1,9 @@
 #pragma once
-#include <GLFW/glfw3.h>
-#include <vulkan/vulkan.hpp>
+#include "vulkan/vulkan.hpp"
+
+#include "Vulkan/instance.h"
+#include "Vulkan/device.h"
+#include "Vulkan/logging.h"
 /*
 * including the prebuilt header from the lunarg sdk will load
 * most functions, but not all.
@@ -37,9 +40,18 @@ private:
 	int width{ 640 };
 	int height{ 480 };
 	GLFWwindow* window{ nullptr };
-	vk::Instance instance{ nullptr };
 
+	vk::Instance instance{ nullptr };
+	vk::DebugUtilsMessengerEXT debugMessenger{ nullptr };
+	vk::DispatchLoaderDynamic dldi;
+	
+	vk::PhysicalDevice physicalDevice{ nullptr };
+	
 	//glfw setup
 	void build_glfw_window();
 	void create_instance();
+	void make_debug_messenger();
+
+	void make_device();
+
 };

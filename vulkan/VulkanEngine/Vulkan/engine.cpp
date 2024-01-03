@@ -1,7 +1,9 @@
+#include "pch.h"
 #include "engine.h"
-#include <iostream>
-#include "Vulkan/instance.h"
-Engine::Engine() {
+
+
+Engine::Engine() 
+{
 
 	if (debugMode) {
 		std::cout << "Making a graphics engine\n";
@@ -9,6 +11,7 @@ Engine::Engine() {
 
 	build_glfw_window();
 	create_instance();
+	make_device();
 }
 
 void Engine::build_glfw_window() {
@@ -38,15 +41,31 @@ void Engine::build_glfw_window() {
 void Engine::create_instance()
 {
 	instance = vkInit::make_instance(debugMode, "ID Tech 12");
-
+	dldi = vk::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
+	if (debugMode)
+	{
+		make_debug_messenger();
+	}
 }
 
-Engine::~Engine() {
+void Engine::make_debug_messenger()
+{
+	debugMessenger = vkInit::make_debug_messenger(instance, dldi);
+}
+
+void Engine::make_device()
+{
+	physicalDevice = vkInit::choose_physical_device(instance, debugMode);
+	vkInit::findQueueFamilies(physicalDevice, debugMode);
+}
+
+Engine::~Engine() 
+{
 
 	if (debugMode) {
 		std::cout << "Goodbye see you!\n";
 	}
-
+	instance.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dldi);
 	//terminate glfw
 	glfwTerminate();
 }

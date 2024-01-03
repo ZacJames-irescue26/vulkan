@@ -1,5 +1,8 @@
 #pragma once
 
+#include "GLFW/glfw3.h"
+#include "vulkan/vulkan.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -19,4 +22,3 @@
 #include <unordered_set>
 #include <cassert>
 
-#include "vulkan/vulkan.hpp"
