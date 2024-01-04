@@ -212,10 +212,3 @@ vkInit::QueueFamilyIndices vkInit::findQueueFamilies(vk::PhysicalDevice device, 
 	return indices;
 
 }
-
-vk::Device vkInit::create_logical_device(vk::PhysicalDevice physicalDevice, bool debug)
-{
-	QueueFamilyIndices indices = findQueueFamilies(physicalDevice, debug);
-	float queuePriority = 1.0f;
-	vk::DeviceQueueCreateInfo queueCreateInfo = vk::DeviceQueueCreateInfo()
-}
