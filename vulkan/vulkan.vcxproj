@@ -104,15 +104,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependancies\include;C:\VulkanSDK\1.3.211.0\Include;VulkanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependancies\include;C:\VulkanSDK\1.3.268.0\Include;VulkanEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Dependancies\libs\glfw;C:\VulkanSDK\1.3.211.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependancies\libs\glfw;C:\VulkanSDK\1.3.268.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -142,6 +142,8 @@
     <ClCompile Include="VulkanEngine\Vulkan\engine.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\instance.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\logging.cpp" />
+    <ClCompile Include="VulkanEngine\Vulkan\queue_families.cpp" />
+    <ClCompile Include="VulkanEngine\Vulkan\swapchain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\CompileShaders.bat" />
@@ -152,8 +154,11 @@
     <ClInclude Include="VulkanEngine\pch.h" />
     <ClInclude Include="VulkanEngine\Vulkan\device.h" />
     <ClInclude Include="VulkanEngine\Vulkan\engine.h" />
+    <ClInclude Include="VulkanEngine\Vulkan\frame.h" />
     <ClInclude Include="VulkanEngine\Vulkan\instance.h" />
     <ClInclude Include="VulkanEngine\Vulkan\logging.h" />
+    <ClInclude Include="VulkanEngine\Vulkan\queue_families.h" />
+    <ClInclude Include="VulkanEngine\Vulkan\swapchain.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
