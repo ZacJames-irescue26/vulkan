@@ -142,6 +142,7 @@
     <ClCompile Include="VulkanEngine\Vulkan\engine.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\instance.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\logging.cpp" />
+    <ClCompile Include="VulkanEngine\Vulkan\pipeline.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\queue_families.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\shader.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\swapchain.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="VulkanEngine\Vulkan\frame.h" />
     <ClInclude Include="VulkanEngine\Vulkan\instance.h" />
     <ClInclude Include="VulkanEngine\Vulkan\logging.h" />
+    <ClInclude Include="VulkanEngine\Vulkan\pipeline.h" />
     <ClInclude Include="VulkanEngine\Vulkan\queue_families.h" />
     <ClInclude Include="VulkanEngine\Vulkan\shader.h" />
     <ClInclude Include="VulkanEngine\Vulkan\swapchain.h" />

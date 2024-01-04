@@ -42,6 +42,9 @@
     <ClCompile Include="VulkanEngine\Vulkan\shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VulkanEngine\Vulkan\pipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\shader.vert" />
@@ -76,6 +79,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VulkanEngine\Vulkan\shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanEngine\Vulkan\pipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
