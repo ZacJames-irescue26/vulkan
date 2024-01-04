@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "device.h"
+#include "queue_families.h"
 
 
 vk::PhysicalDevice vkInit::choose_physical_device(vk::Instance& instance, bool debug)
@@ -182,33 +183,68 @@ bool vkInit::isSuitable(const vk::PhysicalDevice& device, const bool debug) {
 }
 
 
-vkInit::QueueFamilyIndices vkInit::findQueueFamilies(vk::PhysicalDevice device, bool debug)
-{
-	vkInit::QueueFamilyIndices indices;
-	std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
 
+
+vk::Device vkInit::create_logical_device(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface, bool debug)
+{
+	vkUtil::QueueFamilyIndices indices = vkUtil::findQueueFamilies(physicalDevice, surface, debug);
+	std::vector<uint32_t> uniqueIndices;
+	uniqueIndices.push_back(indices.graphicsFamily.value());
+	if (indices.graphicsFamily.value() != indices.presentFamily.value())
+	{
+		uniqueIndices.push_back(indices.presentFamily.value());
+	}
+	float queuePriority = 1.0f;
+	
+	std::vector<vk::DeviceQueueCreateInfo> queueCreateInfo;
+	for (uint32_t queueFamilyIndex : uniqueIndices)
+	{
+		queueCreateInfo.push_back(vk::DeviceQueueCreateInfo(
+			vk::DeviceQueueCreateFlags(),queueFamilyIndex,
+			1, &queuePriority
+		));
+
+	}
+
+	std::vector<const char*> deviceExtensions = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
+
+
+	vk::PhysicalDeviceFeatures deviceFeatures = vk::PhysicalDeviceFeatures();
+	std::vector<const char*> enabledLayers;
 	if (debug)
 	{
-		std::cout << "System can support " << queueFamilies.size() << " queue families" << std::endl;
+		enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
 	}
+	vk::DeviceCreateInfo deviceInfo = vk::DeviceCreateInfo(
+		vk::DeviceCreateFlags(), queueCreateInfo.size(),queueCreateInfo.data(), enabledLayers.size(), enabledLayers.data(),
+		deviceExtensions.size(), deviceExtensions.data(), &deviceFeatures
+	);
 
-	int i = 0;
-	for (vk::QueueFamilyProperties queueFamily : queueFamilies)
+	try {
+		vk::Device device = physicalDevice.createDevice(deviceInfo);
+		if (debug)
+		{
+			std::cout << "GPU has been successfully abstracted! " << std::endl;
+		}
+		return device;
+	}
+	catch (vk::SystemError err)
 	{
-		if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
+		if (debug)
 		{
-			indices.graphicsFamily = i;
-			indices.presentFamily = i;
-			
+			std::cout << "Device creation failed! " <<std::endl;
 		}
-
-		if (indices.isComplete())
-		{
-			break;
-		}
-		i++;
 	}
-
-	return indices;
-
+	return nullptr;
 }
+
+std::array<vk::Queue, 2> vkInit::get_queue(vk::PhysicalDevice physicalDevice, vk::Device device, vk::SurfaceKHR surface, bool debug)
+{
+	vkUtil::QueueFamilyIndices indices = vkUtil::findQueueFamilies(physicalDevice, surface, debug);
+
+	return {{device.getQueue(indices.graphicsFamily.value(), 0),
+			 device.getQueue(indices.presentFamily.value(),  0)}};
+}
+

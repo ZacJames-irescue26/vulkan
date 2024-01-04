@@ -1,5 +1,14 @@
 #include "pch.h"
 #include "instance.h"
+
+/**
+	Check whether the requested extensions and layers are supported.
+
+	\param extensions a list of extension names being requested.
+	\param layers a list of layer names being requested.
+	\param debug whether to log error messages.
+	\returns whether all of the extensions and layers are supported.
+*/
 bool vkInit::supported(std::vector<const char*>& extensions, std::vector<const char*>& layers, bool debug) {
 
 	//check extension support
@@ -62,6 +71,13 @@ bool vkInit::supported(std::vector<const char*>& extensions, std::vector<const c
 	return true;
 }
 
+/**
+	Create a Vulkan instance.
+
+	\param debug whether the system is being run in debug mode.
+	\param applicationName the name of the application.
+	\returns the instance created.
+*/
 vk::Instance vkInit::make_instance(bool debug, const char* applicationName) {
 
 	if (debug) {
@@ -110,7 +126,7 @@ vk::Instance vkInit::make_instance(bool debug, const char* applicationName) {
 	* Or drop down to an earlier version to ensure compatibility with more devices
 	* VK_MAKE_API_VERSION(variant, major, minor, patch)
 	*/
-	version = VK_MAKE_API_VERSION(0, 1, 0, 0);
+	version = VK_MAKE_API_VERSION(0, 1, 2, 0);
 
 	/*
 	* from vulkan_structs.hpp:
@@ -159,6 +175,7 @@ vk::Instance vkInit::make_instance(bool debug, const char* applicationName) {
 	}
 
 	if (!supported(extensions, layers, debug)) {
+		std::cout << "not supported " << std::endl;
 		return nullptr;
 	}
 

@@ -1,9 +1,7 @@
 #pragma once
 #include "vulkan/vulkan.hpp"
+#include "frame.h"
 
-#include "Vulkan/instance.h"
-#include "Vulkan/device.h"
-#include "Vulkan/logging.h"
 /*
 * including the prebuilt header from the lunarg sdk will load
 * most functions, but not all.
@@ -44,9 +42,18 @@ private:
 	vk::Instance instance{ nullptr };
 	vk::DebugUtilsMessengerEXT debugMessenger{ nullptr };
 	vk::DispatchLoaderDynamic dldi;
+	vk::SurfaceKHR surface;
 	
 	vk::PhysicalDevice physicalDevice{ nullptr };
-	
+	vk::Device device{nullptr};
+	vk::Queue graphicsQueue{nullptr};
+	vk::Queue presentQueue{nullptr};
+	vk::SwapchainKHR swapchain;
+	std::vector<vkUtil::SwapChainFrame> swapchainFrames;
+	vk::Format swapchainFormat;
+	vk::Extent2D swapchainExtent;
+
+
 	//glfw setup
 	void build_glfw_window();
 	void create_instance();

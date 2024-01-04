@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "engine.h"
-
+#include "Vulkan/instance.h"
+#include "Vulkan/device.h"
+#include "Vulkan/logging.h"
+#include "Vulkan/swapchain.h"
 
 Engine::Engine() 
 {
@@ -42,10 +45,19 @@ void Engine::create_instance()
 {
 	instance = vkInit::make_instance(debugMode, "ID Tech 12");
 	dldi = vk::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
-	if (debugMode)
-	{
-		make_debug_messenger();
+	if (debugMode) {
+		debugMessenger = vkInit::make_debug_messenger(instance, dldi);
 	}
+	VkSurfaceKHR c_style_Surface;
+	if(glfwCreateWindowSurface(instance, window, nullptr, &c_style_Surface) != VK_SUCCESS)
+	{
+		if (debugMode)
+		{
+			std::cout << "Failed to abstract the glfw surface for Vulkan" << std::endl;
+		}
+	}
+	surface = c_style_Surface;
+
 }
 
 void Engine::make_debug_messenger()
@@ -56,7 +68,14 @@ void Engine::make_debug_messenger()
 void Engine::make_device()
 {
 	physicalDevice = vkInit::choose_physical_device(instance, debugMode);
-	vkInit::findQueueFamilies(physicalDevice, debugMode);
+	device = vkInit::create_logical_device(physicalDevice, surface, debugMode);
+	std::array<vk::Queue,2> queues = vkInit::get_queue(physicalDevice, device, surface, debugMode);
+	graphicsQueue = queues[0];
+	presentQueue = queues[1];
+	vkInit::SwapChainBundle bundle = vkInit::create_swapchain(device, physicalDevice, surface, width, height, debugMode);
+	swapchainFrames = bundle.frames;
+	swapchainFormat = bundle.format;
+	swapchainExtent = bundle.extent;
 }
 
 Engine::~Engine() 
@@ -65,7 +84,22 @@ Engine::~Engine()
 	if (debugMode) {
 		std::cout << "Goodbye see you!\n";
 	}
-	instance.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dldi);
+	for (vkUtil::SwapChainFrame frame : swapchainFrames)
+	{
+		device.destroyImageView(frame.imageView);
+	}
+
+
+	device.destroySwapchainKHR(swapchain);
+	device.destroy();
+
+	instance.destroySurfaceKHR(surface);
+	
+	
+	if (debugMode)
+	{
+		instance.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dldi);
+	}
 	//terminate glfw
 	glfwTerminate();
 }
