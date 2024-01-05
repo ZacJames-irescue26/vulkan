@@ -138,14 +138,19 @@
     <ClCompile Include="VulkanEngine\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="VulkanEngine\app.cpp" />
+    <ClCompile Include="VulkanEngine\scene.cpp" />
+    <ClCompile Include="VulkanEngine\Vulkan\commands.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\device.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\engine.cpp" />
+    <ClCompile Include="VulkanEngine\Vulkan\framebuffer.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\instance.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\logging.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\pipeline.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\queue_families.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\shader.cpp" />
     <ClCompile Include="VulkanEngine\Vulkan\swapchain.cpp" />
+    <ClCompile Include="VulkanEngine\Vulkan\sync.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\CompileShaders.bat" />
@@ -154,15 +159,21 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VulkanEngine\pch.h" />
+    <ClInclude Include="VulkanEngine\app.h" />
+    <ClInclude Include="VulkanEngine\scene.h" />
+    <ClInclude Include="VulkanEngine\Vulkan\commands.h" />
     <ClInclude Include="VulkanEngine\Vulkan\device.h" />
     <ClInclude Include="VulkanEngine\Vulkan\engine.h" />
     <ClInclude Include="VulkanEngine\Vulkan\frame.h" />
+    <ClInclude Include="VulkanEngine\Vulkan\framebuffer.h" />
     <ClInclude Include="VulkanEngine\Vulkan\instance.h" />
     <ClInclude Include="VulkanEngine\Vulkan\logging.h" />
     <ClInclude Include="VulkanEngine\Vulkan\pipeline.h" />
     <ClInclude Include="VulkanEngine\Vulkan\queue_families.h" />
+    <ClInclude Include="VulkanEngine\Vulkan\render_structs.h" />
     <ClInclude Include="VulkanEngine\Vulkan\shader.h" />
     <ClInclude Include="VulkanEngine\Vulkan\swapchain.h" />
+    <ClInclude Include="VulkanEngine\Vulkan\sync.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

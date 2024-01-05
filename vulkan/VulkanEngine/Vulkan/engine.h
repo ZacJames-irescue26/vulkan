@@ -1,7 +1,7 @@
 #pragma once
 #include "vulkan/vulkan.hpp"
 #include "frame.h"
-
+#include "scene.h"
 /*
 * including the prebuilt header from the lunarg sdk will load
 * most functions, but not all.
@@ -25,9 +25,11 @@ class Engine {
 
 public:
 
-	Engine();
+	Engine(int width, int height, GLFWwindow* window, bool debugMode);
 
 	~Engine();
+
+	void render(Scene* scene);
 
 private:
 
@@ -35,15 +37,17 @@ private:
 	bool debugMode = true;
 
 	//glfw window parameters
-	int width{ 640 };
-	int height{ 480 };
-	GLFWwindow* window{ nullptr };
-
+	int width;
+	int height;
+	
+	GLFWwindow* window{nullptr};
+	// instance related variables
 	vk::Instance instance{ nullptr };
 	vk::DebugUtilsMessengerEXT debugMessenger{ nullptr };
 	vk::DispatchLoaderDynamic dldi;
 	vk::SurfaceKHR surface;
 	
+	// device related variables
 	vk::PhysicalDevice physicalDevice{ nullptr };
 	vk::Device device{nullptr};
 	vk::Queue graphicsQueue{nullptr};
@@ -54,11 +58,27 @@ private:
 	vk::Extent2D swapchainExtent;
 
 
-	//glfw setup
-	void build_glfw_window();
+	//pipeline-related variables
+	vk::PipelineLayout pipelineLayout;
+	vk::RenderPass renderpass;
+	vk::Pipeline pipeline;
+
+
+	//command related variables
+	vk::CommandPool commandPool;
+	vk::CommandBuffer mainCommandBuffer;
+
+	int maxFramesInFlight, frameNumber;
+
+
+
+
 	void create_instance();
 	void make_debug_messenger();
 
 	void make_device();
+	void make_pipeline();
 
+	void finalize_setup();
+	void record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imageIndex, Scene* scene);
 };
