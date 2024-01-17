@@ -10,68 +10,100 @@
 #include "sync.h"
 #include "render_structs.h"
 
-Engine::Engine(int width, int height, GLFWwindow* window, bool debugMode)
-{
+Engine::Engine(int width, int height, GLFWwindow* window, bool debug) {
+
 	this->width = width;
 	this->height = height;
 	this->window = window;
-	this->debugMode = debugMode;
+	debugMode = debug;
+
 	if (debugMode) {
 		std::cout << "Making a graphics engine\n";
 	}
-	create_instance();
+
+	make_instance();
+
 	make_device();
+
 	make_pipeline();
+
 	finalize_setup();
 }
 
+void Engine::make_instance() {
 
-void Engine::create_instance()
-{
 	instance = vkInit::make_instance(debugMode, "ID Tech 12");
 	dldi = vk::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
 	if (debugMode) {
 		debugMessenger = vkInit::make_debug_messenger(instance, dldi);
 	}
-	VkSurfaceKHR c_style_Surface;
-	if(glfwCreateWindowSurface(instance, window, nullptr, &c_style_Surface) != VK_SUCCESS)
-	{
-		if (debugMode)
-		{
-			std::cout << "Failed to abstract the glfw surface for Vulkan" << std::endl;
+	VkSurfaceKHR c_style_surface;
+	if (glfwCreateWindowSurface(instance, window, nullptr, &c_style_surface) != VK_SUCCESS) {
+		if (debugMode) {
+			std::cout << "Failed to abstract glfw surface for Vulkan\n";
 		}
 	}
-	surface = c_style_Surface;
-
+	else if (debugMode) {
+		std::cout << "Successfully abstracted glfw surface for Vulkan\n";
+	}
+	//copy constructor converts to hpp convention
+	surface = c_style_surface;
 }
 
-void Engine::make_debug_messenger()
-{
-	debugMessenger = vkInit::make_debug_messenger(instance, dldi);
-}
+void Engine::make_device() {
 
-void Engine::make_device()
-{
 	physicalDevice = vkInit::choose_physical_device(instance, debugMode);
 	device = vkInit::create_logical_device(physicalDevice, surface, debugMode);
-	std::array<vk::Queue,2> queues = vkInit::get_queue(physicalDevice, device, surface, debugMode);
+	std::array<vk::Queue, 2> queues = vkInit::get_queue(physicalDevice, device, surface, debugMode);
 	graphicsQueue = queues[0];
 	presentQueue = queues[1];
+	make_swapchain();
+	frameNumber = 0;
+}
+
+/**
+* Make a swapchain
+*/
+void Engine::make_swapchain() {
+
 	vkInit::SwapChainBundle bundle = vkInit::create_swapchain(device, physicalDevice, surface, width, height, debugMode);
 	swapchain = bundle.swapchain;
 	swapchainFrames = bundle.frames;
 	swapchainFormat = bundle.format;
 	swapchainExtent = bundle.extent;
 	maxFramesInFlight = static_cast<int>(swapchainFrames.size());
-	frameNumber = 0;
+
 }
 
-void Engine::make_pipeline()
-{
+/**
+* The swapchain must be recreated upon resize or minimization, among other cases
+*/
+void Engine::recreate_swapchain() {
+
+	width = 0;
+	height = 0;
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(window, &width, &height);
+		glfwWaitEvents();
+	}
+
+	device.waitIdle();
+
+	cleanup_swapchain();
+	make_swapchain();
+	make_framebuffers();
+	make_frame_sync_objects();
+	vkInit::commandBufferInputChunk commandBufferInput = { device, commandPool, swapchainFrames };
+	vkInit::make_frame_command_buffers(commandBufferInput, debugMode);
+
+}
+
+void Engine::make_pipeline() {
+
 	vkInit::GraphicsPipelineInBundle specification = {};
 	specification.device = device;
-	specification.vertexFilepath = "shaders/vert.spv";
-	specification.fragmentFilepath = "shaders/frag.spv";
+	specification.vertexFilepath = "shaders/vertex.spv";
+	specification.fragmentFilepath = "shaders/fragment.spv";
 	specification.swapchainExtent = swapchainExtent;
 	specification.swapchainImageFormat = swapchainFormat;
 
@@ -82,33 +114,51 @@ void Engine::make_pipeline()
 	pipelineLayout = output.layout;
 	renderpass = output.renderpass;
 	pipeline = output.pipeline;
+
 }
 
-void Engine::finalize_setup()
-{
+/**
+* Make a framebuffer for each frame
+*/
+void Engine::make_framebuffers() {
+
 	vkInit::framebufferInput frameBufferInput;
 	frameBufferInput.device = device;
 	frameBufferInput.renderpass = renderpass;
 	frameBufferInput.swapchainExtent = swapchainExtent;
 	vkInit::make_framebuffers(frameBufferInput, swapchainFrames, debugMode);
 
-	commandPool = vkInit::make_command_pool(device, physicalDevice, surface, debugMode);
+}
 
-	vkInit::commandBufferInputChunk commandBufferInput = { device, commandPool, swapchainFrames };
-	mainCommandBuffer = vkInit::make_command_buffers(commandBufferInput, debugMode);
+/**
+* Make synchronization objects for each frame
+*/
+void Engine::make_frame_sync_objects() {
 
-	for (vkUtil::SwapChainFrame& frame : swapchainFrames)
-	{
-		frame.inFlight = vkInit::make_fence(device, debugMode);
+	for (vkUtil::SwapChainFrame& frame : swapchainFrames) {
 		frame.imageAvailable = vkInit::make_semaphore(device, debugMode);
 		frame.renderFinished = vkInit::make_semaphore(device, debugMode);
-		
+		frame.inFlight = vkInit::make_fence(device, debugMode);
 	}
 
 }
 
-void Engine::record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imageIndex, Scene* scene)
-{
+void Engine::finalize_setup() {
+
+	make_framebuffers();
+
+	commandPool = vkInit::make_command_pool(device, physicalDevice, surface, debugMode);
+
+	vkInit::commandBufferInputChunk commandBufferInput = { device, commandPool, swapchainFrames };
+	mainCommandBuffer = vkInit::make_command_buffer(commandBufferInput, debugMode);
+	vkInit::make_frame_command_buffers(commandBufferInput, debugMode);
+
+	make_frame_sync_objects();
+
+}
+
+void Engine::record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imageIndex, Scene* scene) {
+
 	vk::CommandBufferBeginInfo beginInfo = {};
 
 	try {
@@ -134,13 +184,19 @@ void Engine::record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imag
 	commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
 
 	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-	for (glm::vec3 position : scene->trianglePositions)
-	{
+
+	for (glm::vec3 position : scene->trianglePositions) {
+
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
 		vkUtil::ObjectData objectData;
 		objectData.model = model;
-		commandBuffer.pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(objectData), & objectData);
+		commandBuffer.pushConstants(
+			pipelineLayout, vk::ShaderStageFlagBits::eVertex,
+			0, sizeof(objectData), &objectData
+		);
+
 		commandBuffer.draw(3, 1, 0, 0);
+
 	}
 
 	commandBuffer.endRenderPass();
@@ -154,59 +210,35 @@ void Engine::record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imag
 			std::cout << "failed to record command buffer!" << std::endl;
 		}
 	}
-
 }
 
-Engine::~Engine() 
-{
-	device.waitIdle();
-	if (debugMode) {
-		std::cout << "Goodbye see you!\n";
-	}
+void Engine::render(Scene* scene) {
 
-	
-
-
-	device.destroyCommandPool(commandPool);
-
-	device.destroyPipeline(pipeline);
-	device.destroyPipelineLayout(pipelineLayout);
-	device.destroyRenderPass(renderpass);
-
-	for (vkUtil::SwapChainFrame frame : swapchainFrames) {
-		device.destroyImageView(frame.imageView);
-		device.destroyFramebuffer(frame.framebuffer);
-		device.destroyFence(frame.inFlight);
-		device.destroySemaphore(frame.imageAvailable);
-		device.destroySemaphore(frame.renderFinished);
-	}
-
-	device.destroySwapchainKHR(swapchain);
-	device.destroy();
-
-	instance.destroySurfaceKHR(surface);
-	if (debugMode) {
-		instance.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dldi);
-	}
-	/*
-	* from vulkan_funcs.hpp:
-	*
-	* void Instance::destroy( Optional<const VULKAN_HPP_NAMESPACE::AllocationCallbacks> allocator = nullptr,
-											Dispatch const & d = ::vk::getDispatchLoaderStatic())
-	*/
-	instance.destroy();
-
-	//terminate glfw
-	glfwTerminate();
-}
-
-void Engine::render(Scene* scene)
-{
-	device.waitForFences(1, &swapchainFrames[frameNumber].inFlight, VK_TRUE, UINT64_MAX);
-	device.resetFences(1, &swapchainFrames[frameNumber].inFlight);
+	device.waitForFences(1, &(swapchainFrames[frameNumber].inFlight), VK_TRUE, UINT64_MAX);
+	device.resetFences(1, &(swapchainFrames[frameNumber].inFlight));
 
 	//acquireNextImageKHR(vk::SwapChainKHR, timeout, semaphore_to_signal, fence)
-	uint32_t imageIndex{ device.acquireNextImageKHR(swapchain, UINT64_MAX, swapchainFrames[frameNumber].imageAvailable, nullptr).value };
+	uint32_t imageIndex;
+	try {
+		vk::ResultValue acquire = device.acquireNextImageKHR(
+			swapchain, UINT64_MAX,
+			swapchainFrames[frameNumber].imageAvailable, nullptr
+		);
+		imageIndex = acquire.value;
+	}
+	catch (vk::OutOfDateKHRError error) {
+		std::cout << "Recreate" << std::endl;
+		recreate_swapchain();
+		return;
+	}
+	catch (vk::IncompatibleDisplayKHRError error) {
+		std::cout << "Recreate" << std::endl;
+		recreate_swapchain();
+		return;
+	}
+	catch (vk::SystemError error) {
+		std::cout << "Failed to acquire swapchain image!" << std::endl;
+	}
 
 	vk::CommandBuffer commandBuffer = swapchainFrames[frameNumber].commandBuffer;
 
@@ -249,6 +281,71 @@ void Engine::render(Scene* scene)
 
 	presentInfo.pImageIndices = &imageIndex;
 
-	presentQueue.presentKHR(presentInfo);
+	vk::Result present;
+
+	try {
+		present = presentQueue.presentKHR(presentInfo);
+	}
+	catch (vk::OutOfDateKHRError error) {
+		present = vk::Result::eErrorOutOfDateKHR;
+	}
+
+	if (present == vk::Result::eErrorOutOfDateKHR || present == vk::Result::eSuboptimalKHR) {
+		std::cout << "Recreate" << std::endl;
+		recreate_swapchain();
+		return;
+	}
+
 	frameNumber = (frameNumber + 1) % maxFramesInFlight;
+
+}
+
+/**
+* Free the memory associated with the swapchain objects
+*/
+void Engine::cleanup_swapchain() {
+
+	for (vkUtil::SwapChainFrame frame : swapchainFrames) {
+		device.destroyImageView(frame.imageView);
+		device.destroyFramebuffer(frame.framebuffer);
+		device.destroyFence(frame.inFlight);
+		device.destroySemaphore(frame.imageAvailable);
+		device.destroySemaphore(frame.renderFinished);
+	}
+	device.destroySwapchainKHR(swapchain);
+
+}
+
+Engine::~Engine() {
+
+	device.waitIdle();
+
+	if (debugMode) {
+		std::cout << "Goodbye see you!\n";
+	}
+
+	device.destroyCommandPool(commandPool);
+
+	device.destroyPipeline(pipeline);
+	device.destroyPipelineLayout(pipelineLayout);
+	device.destroyRenderPass(renderpass);
+
+	cleanup_swapchain();
+
+	device.destroy();
+
+	instance.destroySurfaceKHR(surface);
+	if (debugMode) {
+		instance.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dldi);
+	}
+	/*
+	* from vulkan_funcs.hpp:
+	*
+	* void Instance::destroy( Optional<const VULKAN_HPP_NAMESPACE::AllocationCallbacks> allocator = nullptr,
+											Dispatch const & d = ::vk::getDispatchLoaderStatic())
+	*/
+	instance.destroy();
+
+	//terminate glfw
+	glfwTerminate();
 }

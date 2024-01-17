@@ -73,12 +73,19 @@ private:
 
 
 
-	void create_instance();
-	void make_debug_messenger();
+	void make_instance();
+	/*void make_debug_messenger();*/
 
 	void make_device();
+	void make_swapchain();
+	void recreate_swapchain();
+	
 	void make_pipeline();
 
 	void finalize_setup();
 	void record_draw_commands(vk::CommandBuffer commandBuffer, uint32_t imageIndex, Scene* scene);
+	void make_framebuffers();
+	void make_frame_sync_objects();
+
+	void cleanup_swapchain();
 };
